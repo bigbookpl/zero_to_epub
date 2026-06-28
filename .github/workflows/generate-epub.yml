@@ -16,6 +16,8 @@ jobs:
   build-epub:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -38,13 +40,18 @@ jobs:
         run: |
           python main.py --days "$DAYS" --no-cache -v
           epub_file=$(ls -1 zero_*.epub | head -n 1)
+          release_tag="${epub_file%.epub}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            release_tag="${release_tag}-run-${{ github.run_number }}"
+          fi
           echo "epub_file=$epub_file" >> "$GITHUB_OUTPUT"
-          echo "Wygenerowano: $epub_file"
+          echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
+          echo "Wygenerowano: $epub_file (release: $release_tag)"
 
-      - name: Upload EPUB artifact
-        uses: actions/upload-artifact@v4
+      - name: Publish EPUB release
+        uses: softprops/action-gh-release@v2
         with:
-          name: ${{ steps.generate.outputs.epub_file }}
-          path: ${{ steps.generate.outputs.epub_file }}
-          if-no-files-found: error
-          retention-days: 90
+          tag_name: ${{ steps.generate.outputs.release_tag }}
+          name: ${{ steps.generate.outputs.release_tag }}
+          files: ${{ steps.generate.outputs.epub_file }}
+          make_latest: true

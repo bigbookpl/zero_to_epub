@@ -75,7 +75,7 @@ Na końcu książki jest **indeks autorów** (`authors.xhtml`): alfabetyczna lis
 
 ## GitHub Actions (automatyczne EPUB)
 
-Workflow [`.github/workflows/generate-epub.yml`](.github/workflows/generate-epub.yml) generuje EPUB w chmurze i zapisuje go jako artefakt.
+Workflow [`.github/workflows/generate-epub.yml`](.github/workflows/generate-epub.yml) generuje EPUB w chmurze i publikuje go jako **GitHub Release** (załącznik do wydania).
 
 ### Harmonogram
 
@@ -90,7 +90,10 @@ Workflow [`.github/workflows/generate-epub.yml`](.github/workflows/generate-epub
 
 ### Pobieranie pliku
 
-Po zakończeniu joba wejdź w run → sekcja **Artifacts** → pobierz plik `zero_YYYY-MM-DD_YYYY-MM-DD.epub` (przechowywany 90 dni).
+Wszystkie wygenerowane EPUB-y są w zakładce **[Releases](https://github.com/bigbookpl/zero_to_epub/releases)** — możesz pobrać najnowszy i poprzednie wydania (np. `zero_2026-06-21_2026-06-28.epub`).
+
+- cotygodniowy build → tag `zero_YYYY-MM-DD_YYYY-MM-DD`
+- ręczny build → tag z sufiksem `-run-<numer>` (żeby nie kolidował z istniejącym wydaniem)
 
 ### Lokalny cron (alternatywa)
 
