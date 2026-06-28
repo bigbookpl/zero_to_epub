@@ -1,0 +1,7 @@
+xhtml: "<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"\
+  http://www.idpf.org/2007/ops\" lang=\"pl\" xml:lang=\"pl\">\n<head>\n  <meta charset=\"\
+  utf-8\"/>\n  <title>Test &amp; tytuł</title>\n  <link rel=\"stylesheet\" type=\"\
+  text/css\" href=\"../style/nav.css\"/>\n\n</head>\n<body>\n  <h1>Test &amp; tytuł</h1>\n\
+  \  <p class=\"author\"><a href=\"../authors.xhtml#author-jan-kowalski\">Jan Kowalski</a></p>\n\
+  \  <p class=\"excerpt\">Lead \"cytat\"</p>\n  <div class=\"article-body\"><p>Treść</p></div>\n\
+  </body>\n</html>"

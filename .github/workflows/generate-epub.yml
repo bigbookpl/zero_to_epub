@@ -1,0 +1,50 @@
+name: Generate EPUB
+
+on:
+  schedule:
+    # Sobota 06:00 Europe/Warsaw (CEST, UTC+2). W czasie zimowym (CET) uruchomienie o 05:00.
+    - cron: "0 4 * * 6"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Liczba dni wstecz (od północy, strefa Europe/Warsaw)"
+        required: true
+        default: "7"
+        type: string
+
+jobs:
+  build-epub:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate EPUB
+        id: generate
+        env:
+          DAYS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.days || '7' }}
+        run: |
+          python main.py --days "$DAYS" --no-cache -v
+          epub_file=$(ls -1 zero_*.epub | head -n 1)
+          echo "epub_file=$epub_file" >> "$GITHUB_OUTPUT"
+          echo "Wygenerowano: $epub_file"
+
+      - name: Upload EPUB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.generate.outputs.epub_file }}
+          path: ${{ steps.generate.outputs.epub_file }}
+          if-no-files-found: error
+          retention-days: 90

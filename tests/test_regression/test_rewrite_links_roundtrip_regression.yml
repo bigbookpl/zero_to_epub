@@ -1,0 +1,9 @@
+body_html: '
+
+  <p>Pierwszy akapit treści.</p>
+
+  <p>Drugi akapit z <a href="other-article.xhtml">linkiem</a>.</p>
+
+  <img src="https://cdn.zero.pl/test.jpg"/>
+
+  '

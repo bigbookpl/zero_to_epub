@@ -1,0 +1,14 @@
+body_html: '
+
+
+  <p>Pierwszy akapit treści.</p>
+
+
+  <p>Drugi akapit z <a href="https://zero.pl/news/other-article">linkiem</a>.</p>
+
+
+  <img src="https://cdn.zero.pl/test.jpg"/>
+
+  '
+image_urls:
+- https://cdn.zero.pl/test.jpg

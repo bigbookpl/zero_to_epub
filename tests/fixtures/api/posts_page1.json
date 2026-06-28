@@ -1,0 +1,24 @@
+{
+  "member": [
+    {
+      "title": "Artykuł świeży",
+      "link": "https://zero.pl/news/fresh-article",
+      "published": "2026-06-04T10:00:00+02:00",
+      "category": {"title": "Kraj"},
+      "author": {"firstname": "Anna", "lastname": "Nowak"}
+    },
+    {
+      "title": "Artykuł starszy",
+      "link": "https://zero.pl/news/old-article",
+      "published": "2026-05-20T08:00:00+02:00",
+      "category": {"title": "Świat"},
+      "author": {"firstname": "Piotr", "lastname": "Zieliński"}
+    },
+    {
+      "title": "Bez daty",
+      "link": "https://zero.pl/news/no-date",
+      "category": {"title": "Sport"}
+    }
+  ],
+  "totalItems": 2
+}

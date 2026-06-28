@@ -1,0 +1,11 @@
+zip_entries:
+- EPUB/authors.xhtml
+- EPUB/chapters/regression-article.xhtml
+- EPUB/content.opf
+- EPUB/cover.xhtml
+- EPUB/nav.xhtml
+- EPUB/style/nav.css
+- EPUB/title.xhtml
+- EPUB/toc.ncx
+- META-INF/container.xml
+- mimetype
