@@ -28,6 +28,8 @@ USER_AGENT = (
 )
 REQUEST_DELAY = 0.5
 API_PAGE_DELAY = 0.3
+ARTICLE_FETCH_RETRIES = 3
+ARTICLE_FETCH_RETRY_DELAY = 1.0
 API_PARAMS = {
     "type": "post",
     "itemsPerPage": 18,
@@ -196,7 +198,22 @@ def fetch_html(
         if cached is not None:
             log.debug("cache hit: article %s", slug)
             return cached
-    response = client.get(url, headers={"Accept": "text/html"})
+    for attempt in range(ARTICLE_FETCH_RETRIES):
+        try:
+            response = client.get(url, headers={"Accept": "text/html"})
+            break
+        except httpx.RequestError as exc:
+            if attempt < ARTICLE_FETCH_RETRIES - 1:
+                log.warning(
+                    "Błąd pobierania (%s), ponawiam (%d/%d): %s",
+                    type(exc).__name__,
+                    attempt + 2,
+                    ARTICLE_FETCH_RETRIES,
+                    url,
+                )
+                time.sleep(ARTICLE_FETCH_RETRY_DELAY * (attempt + 1))
+                continue
+            raise
     response.raise_for_status()
     html = response.text
     if cache:
@@ -294,6 +311,9 @@ def fetch_articles(
         try:
             html = fetch_html(client, ref.url, cache=cache)
             articles.append(extract_article(html, ref.url, ref))
+        except httpx.RequestError:
+            log.warning("Pominięto (błąd sieci): %s", ref.url)
+            continue
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 404:
                 log.warning("Pominięto (404): %s", ref.url)

@@ -7,6 +7,7 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 from zoneinfo import ZoneInfo
 
+import httpx
 import pytest
 
 from conftest import load_fixture
@@ -14,6 +15,8 @@ from models import ArticleRef
 from scraper import (
     article_slug_from_url,
     extract_article,
+    fetch_articles,
+    fetch_html,
     fetch_refs_for_days,
     ref_from_api_member,
     safe_chapter_slug,
@@ -109,3 +112,53 @@ def test_fetch_refs_for_days_pagination_and_cutoff(mock_sleep):
     assert urls.count("https://zero.pl/news/fresh-article") == 1
     assert "https://zero.pl/news/old-article" not in urls
     assert len(refs) == 1
+
+
+@patch("scraper.time.sleep")
+def test_fetch_html_retries_after_timeout(mock_sleep):
+    response = MagicMock()
+    response.raise_for_status = MagicMock()
+    response.text = "<html>ok</html>"
+
+    timeout = httpx.ReadTimeout(
+        "The read operation timed out",
+        request=httpx.Request("GET", "https://zero.pl/news/retry-article"),
+    )
+    client = MagicMock()
+    client.get = MagicMock(side_effect=[timeout, response])
+
+    html = fetch_html(client, "https://zero.pl/news/retry-article")
+
+    assert html == "<html>ok</html>"
+    assert client.get.call_count == 2
+    mock_sleep.assert_called_once()
+
+
+def test_fetch_articles_skips_request_errors():
+    ref_timeout = ArticleRef(
+        title="Timeout",
+        url="https://zero.pl/news/timeout",
+        published=datetime(2026, 6, 1, tzinfo=TZ),
+        category="Kraj",
+    )
+    ref_ok = ArticleRef(
+        title="OK",
+        url="https://zero.pl/news/ok",
+        published=datetime(2026, 6, 1, tzinfo=TZ),
+        category="Kraj",
+    )
+    refs = [ref_timeout, ref_ok]
+
+    timeout = httpx.ReadTimeout(
+        "The read operation timed out",
+        request=httpx.Request("GET", "https://zero.pl/news/timeout"),
+    )
+    article = MagicMock()
+
+    with patch("scraper.fetch_html", side_effect=[timeout, "<html>ok</html>"]), patch(
+        "scraper.extract_article", return_value=article
+    ) as extract:
+        articles = fetch_articles(MagicMock(), refs, delay=0.0)
+
+    assert articles == [article]
+    extract.assert_called_once_with("<html>ok</html>", ref_ok.url, ref_ok)
