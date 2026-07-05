@@ -13,6 +13,7 @@ import pytest
 from conftest import load_fixture
 from models import ArticleRef
 from scraper import (
+    POSTS_API,
     article_slug_from_url,
     extract_article,
     fetch_articles,
@@ -97,6 +98,7 @@ def test_fetch_refs_for_days_pagination_and_cutoff(mock_sleep):
         parsed = urlparse(url)
         page = int(parse_qs(parsed.query).get("page", ["1"])[0])
         resp = MagicMock()
+        resp.status_code = 200
         resp.raise_for_status = MagicMock()
         resp.json = MagicMock(return_value=responses.get(page, {"member": [], "totalItems": 0}))
         return resp
@@ -112,6 +114,27 @@ def test_fetch_refs_for_days_pagination_and_cutoff(mock_sleep):
     assert urls.count("https://zero.pl/news/fresh-article") == 1
     assert "https://zero.pl/news/old-article" not in urls
     assert len(refs) == 1
+
+
+@patch("scraper.time.sleep")
+def test_fetch_refs_for_days_retries_after_timeout(mock_sleep):
+    response = MagicMock()
+    response.status_code = 200
+    response.raise_for_status = MagicMock()
+    response.json = MagicMock(return_value={"member": [], "totalItems": 0})
+
+    timeout = httpx.ReadTimeout(
+        "The read operation timed out",
+        request=httpx.Request("GET", POSTS_API),
+    )
+    client = MagicMock()
+    client.get = MagicMock(side_effect=[timeout, response])
+
+    refs = fetch_refs_for_days(client, days=7)
+
+    assert refs == []
+    assert client.get.call_count == 2
+    mock_sleep.assert_called_once()
 
 
 @patch("scraper.time.sleep")
