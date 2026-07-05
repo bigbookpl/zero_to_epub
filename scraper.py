@@ -28,6 +28,8 @@ USER_AGENT = (
 )
 REQUEST_DELAY = 0.5
 API_PAGE_DELAY = 0.3
+API_FETCH_RETRIES = 3
+API_FETCH_RETRY_DELAY = 1.0
 ARTICLE_FETCH_RETRIES = 3
 ARTICLE_FETCH_RETRY_DELAY = 1.0
 API_PARAMS = {
@@ -130,18 +132,32 @@ def fetch_refs_for_days(client: httpx.Client, days: int) -> list[ArticleRef]:
 
     while True:
         params = {**API_PARAMS, "page": page}
-        for attempt in range(3):
-            response = client.get(f"{POSTS_API}?{urlencode(params)}")
+        for attempt in range(API_FETCH_RETRIES):
+            try:
+                response = client.get(f"{POSTS_API}?{urlencode(params)}")
+            except httpx.RequestError as exc:
+                if attempt < API_FETCH_RETRIES - 1:
+                    log.warning(
+                        "API strona %d: błąd sieci (%s), ponawiam (%d/%d)...",
+                        page,
+                        type(exc).__name__,
+                        attempt + 2,
+                        API_FETCH_RETRIES,
+                    )
+                    time.sleep(API_FETCH_RETRY_DELAY * (attempt + 1))
+                    continue
+                raise
             if response.status_code < 500:
                 break
-            if attempt < 2:
+            if attempt < API_FETCH_RETRIES - 1:
                 log.warning(
-                    "API strona %d: HTTP %d, ponawiam (%d/3)...",
+                    "API strona %d: HTTP %d, ponawiam (%d/%d)...",
                     page,
                     response.status_code,
                     attempt + 2,
+                    API_FETCH_RETRIES,
                 )
-                time.sleep(1.0 * (attempt + 1))
+                time.sleep(API_FETCH_RETRY_DELAY * (attempt + 1))
         response.raise_for_status()
         data = response.json()
         members = data.get("member") or []
